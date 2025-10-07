@@ -65,7 +65,7 @@ uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg
 if uploaded:
     image = Image.open(uploaded)
     image.save("temp.jpg")
-    st.image(image, caption="ภาพที่อัปโหลด", use_column_width=True)
+    st.image(image, caption="ภาพที่อัปโหลด", use_container_width=True)
 
     with st.spinner("🔍 กำลังวิเคราะห์..."):
         result = CLIENT.infer("temp.jpg", model_id="marine-waste-ai-wb2eb/3")
