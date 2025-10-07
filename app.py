@@ -2,17 +2,65 @@ import streamlit as st
 from inference_sdk import InferenceHTTPClient
 from PIL import Image
 
-# ตั้งค่า client ของ Roboflow
+#ตั้งค่าหน้าเว็บ
+st.set_page_config(
+    page_title="🌊 Marine Waste AI",
+    page_icon="🌊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+#กำหนดสีพื้นหลัง
+page_bg = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+}
+[data-testid="stSidebar"] {
+    background-color: #b3e5fc;
+}
+h1, h2, h3, h4, h5 {
+    color: #01579b;
+}
+</style>
+"""
+st.markdown(page_bg, unsafe_allow_html=True)
+
+#ตั้งค่า client ของ Roboflow
 CLIENT = InferenceHTTPClient(
     api_url="https://serverless.roboflow.com",
     api_key="TCwrOT5oJu5pTNpnNKSV"
 )
 
-st.set_page_config(page_title="🌊 Marine Waste AI", page_icon="🌊")
-st.title("🌊 Marine Waste AI")
-st.markdown("แอปนี้ช่วยจำแนกประเภทของขยะทะเล โดยใช้โมเดล AI ที่พัฒนาใน Roboflow")
+# ---------- Sidebar: About ----------
+st.sidebar.title("🌐 Marine Waste AI")
+st.sidebar.markdown("---")
+st.sidebar.header("📘 About the Developer")
+st.sidebar.markdown("""
+**ชื่อ:** นางสาวภัทราวรรณ พรหมเรืองฤทธิ์  
+**สถานะ:** นักศึกษาคณะเทคนิคการแพทย์    
+**รหัสนักศึกษา:** 681110071 🎓  
 
-uploaded = st.file_uploader("📤 อัปโหลดภาพขยะ", type=["jpg", "jpeg", "png"])
+---
+
+โครงการ **Marine Waste AI** พัฒนาเพื่อช่วยจำแนกประเภทของขยะทะเล  
+เช่น พลาสติก โลหะ แก้ว และวัสดุอื่น ๆ  
+โดยใช้โมเดล AI ที่ฝึกจาก Roboflow  
+
+🌊 **เป้าหมายของโครงการ:**  
+- สร้างความตระหนักรู้เกี่ยวกับปัญหามลพิษทางทะเล  
+- ใช้เทคโนโลยี AI เพื่อสนับสนุนการอนุรักษ์สิ่งแวดล้อม  
+
+---
+
+💻 Powered by [Streamlit](https://streamlit.io) & [Roboflow](https://roboflow.com)
+""")
+
+# ---------- ส่วนหลักของหน้าเว็บ ----------
+st.title("🌊 Marine Waste AI")
+st.write("อัปโหลดภาพเพื่อให้ AI จำแนกประเภทของขยะทะเล")
+
+uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
 
 if uploaded:
     image = Image.open(uploaded)
