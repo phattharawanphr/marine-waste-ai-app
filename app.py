@@ -1,76 +1,82 @@
 import streamlit as st
-from inference_sdk import InferenceHTTPClient
 from PIL import Image
+import io, base64, requests, json
 
-#ตั้งค่าหน้าเว็บ
-st.set_page_config(
-    page_title="🌊 Marine Waste AI",
-    page_icon="🌊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+#หน้าเว็บ
+st.set_page_config(page_title="🌊 Marine Waste AI", page_icon="🌊", layout="wide")
 
-#กำหนดสีพื้นหลัง
-page_bg = """
+#สี
+st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+  background: linear-gradient(to bottom, #e0f7fa, #ffffff);
 }
-[data-testid="stSidebar"] {
-    background-color: #b3e5fc;
-}
-h1, h2, h3, h4, h5 {
-    color: #01579b;
-}
+[data-testid="stSidebar"] { background-color: #b3e5fc; }
+h1, h2, h3, h4, h5 { color: #01579b; }
 </style>
-"""
-st.markdown(page_bg, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-#ตั้งค่า client ของ Roboflow
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="TCwrOT5oJu5pTNpnNKSV"
-)
-
-# ---------- Sidebar: About ----------
 st.sidebar.title("🌐 Marine Waste AI")
-st.sidebar.markdown("---")
 st.sidebar.header("📘 About the Developer")
 st.sidebar.markdown("""
-**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์      
-**รหัสนักศึกษา:** 681110071 🎓  
+**น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์**   
+รหัสนักศึกษา **681110071**
 
----
-
-**Marine Waste AI** พัฒนาขึ้นเพื่อช่วยจำแนกประเภทของขยะทะเล  
-เช่น พลาสติก โลหะ และเศษอาหารอื่น ๆ  
-โดยใช้โมเดล AI ที่ฝึกจาก Roboflow  
-
-🌊 **เป้าหมายของแอปพลิเคชัน:**  
-- สร้างความตระหนักรู้เกี่ยวกับปัญหามลพิษทางทะเล  
-- ใช้เทคโนโลยี AI เพื่อสนับสนุนการอนุรักษ์สิ่งแวดล้อม  
-
----
-
-💻 Powered by [Streamlit](https://streamlit.io) & [Roboflow](https://roboflow.com)
+โครงการใช้ AI จำแนกประเภทขยะทะเล เพื่อสนับสนุนการอนุรักษ์สิ่งแวดล้อม
 """)
 
-# ---------- ส่วนหลักของหน้าเว็บ ----------
 st.title("🌊 Marine Waste AI")
 st.write("อัปโหลดภาพเพื่อให้ AI จำแนกประเภทของขยะทะเล")
 
-uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
+#ค่าคงที่ของ Roboflow
+API_KEY = "TCwrOT5oJu5pTNpnNKSV" 
+MODEL_PATH = "marine-waste-ai-wb2eb/3"  
+ENDPOINT = f"https://classify.roboflow.com/{MODEL_PATH}?api_key={API_KEY}"  # docs: classify.roboflow.com
 
+#อัปโหลดและเรียก API
+uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
 if uploaded:
-    image = Image.open(uploaded)
-    image.save("temp.jpg")
-    st.image(image, caption="ภาพที่อัปโหลด", use_container_width=True)
+    #แสดงภาพ
+    img = Image.open(uploaded).convert("RGB")
+    st.image(img, caption="ภาพที่อัปโหลด", use_container_width=True)
+
+    #แปลงภาพ -> base64 ตามสเปค Roboflow Classification API
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    b64_img = base64.b64encode(buf.getvalue()).decode("utf-8")
 
     with st.spinner("🔍 กำลังวิเคราะห์..."):
-        result = CLIENT.infer("temp.jpg", model_id="marine-waste-ai-wb2eb/3")
+        #ส่งเป็น x-www-form-urlencoded (ตัว body คือสตริง base64)
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        resp = requests.post(ENDPOINT, data=b64_img, headers=headers, timeout=60)
+        resp.raise_for_status()
+        result = resp.json()
 
-    pred_class = result["predictions"][0]["class"]
-    confidence = result["predictions"][0]["confidence"] * 100
+    #รองรับทั้งรูปแบบผลลัพธ์แบบ list และ dict ตามเอกสาร
+    #(Single-label อาจคืนเป็น list, หรือเป็น dict + predicted_classes)
+    pred_text = ""
+    try:
+        #กรณี list
+        preds = result.get("predictions", [])
+        if isinstance(preds, list) and preds:
+            top = max(preds, key=lambda x: x.get("confidence", 0))
+            pred_text = f"{top['class']} ({top['confidence']*100:.2f}%)"
+        else:
+            #กรณี dict
+            preds_dict = result.get("predictions", {})
+            if isinstance(preds_dict, dict) and preds_dict:
+                #เลือก class ที่ confidence สูงสุด
+                top_class = max(preds_dict.items(), key=lambda kv: kv[1].get("confidence", 0))[0]
+                conf = preds_dict[top_class]["confidence"] * 100
+                pred_text = f"{top_class} ({conf:.2f}%)"
+    except Exception:
+        pred_text = "ไม่สามารถอ่านผลลัพธ์ได้"
 
-    st.success(f"✅ ผลลัพธ์: **{pred_class}** ({confidence:.2f}%)")
-    st.balloons()
+    if pred_text:
+        st.success(f"✅ ผลลัพธ์: **{pred_text}**")
+    else:
+        st.error("ไม่พบผลลัพธ์จากโมเดล")
+
+    # Debug ปุ่มดู JSON ดิบ (เผื่ออาจารย์อยากเห็น)
+    with st.expander("ดูผลลัพธ์แบบ JSON"):
+        st.code(json.dumps(result, ensure_ascii=False, indent=2))
