@@ -10,15 +10,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# พื้นหลังและสไตล์
+# พื้นหลังและเอฟเฟกต์ฟองอากาศ 
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
-  background: linear-gradient(to bottom right, #cfd8dc, #eceff1);
+  background: linear-gradient(to bottom right, #dbeeff, #f7fbfd);
   animation: fadeIn 2s ease-in;
+  overflow: hidden;
 }
 [data-testid="stSidebar"] {
-  background: linear-gradient(to bottom, #b0bec5, #cfd8dc);
+  background: linear-gradient(to bottom, #cfe0f1, #e3f2fd);
   color: #01579b;
 }
 @keyframes fadeIn {
@@ -31,7 +32,7 @@ h1, h2, h3, h4, h5 {
   text-shadow: 1px 1px 2px #b0bec5;
 }
 .result-box {
-  background-color: #e3f2fd;
+  background-color: #e8f4fd;
   padding: 20px;
   border-radius: 15px;
   border: 2px solid #64b5f6;
@@ -41,18 +42,50 @@ h1, h2, h3, h4, h5 {
 footer {
   text-align: center;
   font-size: 0.9em;
-  color: #0288d1;
+  color: #0277bd;
   margin-top: 50px;
 }
+
+/* เอฟเฟกต์ฟองอากาศ */
+.bubble {
+  position: fixed;
+  bottom: -100px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: rise 10s infinite ease-in;
+}
+@keyframes rise {
+  0% { transform: translateY(0) scale(1); opacity: 0.6; }
+  100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+}
 </style>
+
+<script>
+function createBubbles(){
+  for(let i=0;i<12;i++){
+    let bubble = document.createElement('div');
+    bubble.classList.add('bubble');
+    let size = Math.random()*50+10;
+    bubble.style.width = size+'px';
+    bubble.style.height = size+'px';
+    bubble.style.left = Math.random()*100+'%';
+    bubble.style.animationDuration = (6+Math.random()*6)+'s';
+    bubble.style.animationDelay = (Math.random()*5)+'s';
+    document.body.appendChild(bubble);
+    setTimeout(()=>bubble.remove(), 12000);
+  }
+}
+createBubbles();
+</script>
 """, unsafe_allow_html=True)
 
-# Sidebar
+# ---------- Sidebar ----------
 st.sidebar.title("🌐 Marine Waste AI")
 st.sidebar.markdown("---")
 st.sidebar.header("📘 About the Developer")
 st.sidebar.markdown("""
-**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์   
+**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์ 
 **รหัสนักศึกษา:** 681110071 🎓  
 
 ---
@@ -76,7 +109,7 @@ st.write("อัปโหลดภาพเพื่อให้ AI จำแน
 
 uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
 
-# Roboflow API 
+# Roboflow API
 API_KEY = "TCwrOT5oJu5pTNpnNKSV"
 MODEL_PATH = "marine-waste-ai-wb2eb/3"
 ENDPOINT = f"https://classify.roboflow.com/{MODEL_PATH}?api_key={API_KEY}"
@@ -110,8 +143,6 @@ if uploaded:
             """, unsafe_allow_html=True)
 
             st.progress(confidence / 100)
-            time.sleep(1)
-            st.balloons()
         else:
             st.error("ไม่พบผลลัพธ์จากโมเดล")
     except Exception:
