@@ -14,11 +14,11 @@ st.set_page_config(
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
-  background: linear-gradient(to bottom right, #b3e5fc, #ffffff);
+  background: linear-gradient(to bottom right, #cfd8dc, #eceff1);
   animation: fadeIn 2s ease-in;
 }
 [data-testid="stSidebar"] {
-  background: linear-gradient(to bottom, #81d4fa, #b3e5fc);
+  background: linear-gradient(to bottom, #b0bec5, #cfd8dc);
   color: #01579b;
 }
 @keyframes fadeIn {
@@ -28,14 +28,14 @@ st.markdown("""
 h1, h2, h3, h4, h5 {
   color: #01579b;
   font-weight: 700;
-  text-shadow: 1px 1px 2px #90caf9;
+  text-shadow: 1px 1px 2px #b0bec5;
 }
 .result-box {
-  background-color: #e0f7fa;
+  background-color: #e3f2fd;
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #0288d1;
-  box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+  border: 2px solid #64b5f6;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
   animation: fadeIn 1.5s ease-in;
 }
 footer {
@@ -47,18 +47,18 @@ footer {
 </style>
 """, unsafe_allow_html=True)
 
-# Sidebar 
+# Sidebar
 st.sidebar.title("🌐 Marine Waste AI")
 st.sidebar.markdown("---")
 st.sidebar.header("📘 About the Developer")
 st.sidebar.markdown("""
-**ชื่อ:** นางสาวภัทราวรรณ พรหมเรืองฤทธิ์  
+**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์   
 **รหัสนักศึกษา:** 681110071 🎓  
 
 ---
 
 **Marine Waste AI** พัฒนาเพื่อช่วยจำแนกประเภทของขยะทะเล  
-เช่น พลาสติก โลหะ และเศษอาหารชีวภาพอื่น ๆ  
+เช่น พลาสติก โลหะ และเศษขยะชีวภาพอื่น ๆ  
 โดยใช้โมเดล AI ที่ฝึกจาก Roboflow  
 
 🌊 **เป้าหมาย:**  
@@ -76,17 +76,15 @@ st.write("อัปโหลดภาพเพื่อให้ AI จำแน
 
 uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
 
-# Roboflow API
+# Roboflow API 
 API_KEY = "TCwrOT5oJu5pTNpnNKSV"
 MODEL_PATH = "marine-waste-ai-wb2eb/3"
 ENDPOINT = f"https://classify.roboflow.com/{MODEL_PATH}?api_key={API_KEY}"
 
 if uploaded:
-    # แสดงภาพ
     image = Image.open(uploaded).convert("RGB")
     st.image(image, caption="📸 ภาพที่อัปโหลด", use_container_width=True)
 
-    # แปลงภาพเป็น base64
     buf = io.BytesIO()
     image.save(buf, format="JPEG")
     b64_img = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -103,7 +101,6 @@ if uploaded:
             pred_class = top["class"]
             confidence = top["confidence"] * 100
 
-            # กล่องผลลัพธ์สวยงาม
             st.markdown(f"""
             <div class="result-box">
             <h3>✅ ผลลัพธ์การวิเคราะห์</h3>
@@ -120,7 +117,7 @@ if uploaded:
     except Exception:
         st.error("⚠️ เกิดข้อผิดพลาดในการประมวลผล")
 
-# ---------- Footer ----------
+# Footer
 st.markdown("""
 <footer>
 💻 Powered by <a href="https://streamlit.io" target="_blank">Streamlit</a> & 
