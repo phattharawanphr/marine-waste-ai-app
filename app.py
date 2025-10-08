@@ -2,7 +2,7 @@ import streamlit as st
 from PIL import Image
 import io, base64, requests, time
 
-# ตั้งค่าหน้าเว็บ
+# ตั้งค่าหน้าเว็บ 
 st.set_page_config(
     page_title="🌊 Marine Waste AI",
     page_icon="🌊",
@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# พื้นหลังและเอฟเฟกต์ฟองอากาศ 
+# พื้นหลังและเอฟเฟกต์ฟองอากาศ
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
@@ -49,31 +49,33 @@ footer {
 /* เอฟเฟกต์ฟองอากาศ */
 .bubble {
   position: fixed;
-  bottom: -100px;
-  background: rgba(255, 255, 255, 0.5);
+  bottom: -120px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(173,216,230,0.4));
   border-radius: 50%;
-  opacity: 0.6;
-  animation: rise 10s infinite ease-in;
+  opacity: 0.8;
+  box-shadow: 0 0 10px rgba(173,216,230,0.6);
+  animation: rise 9s infinite ease-in;
+  z-index: 1;
 }
 @keyframes rise {
-  0% { transform: translateY(0) scale(1); opacity: 0.6; }
-  100% { transform: translateY(-120vh) scale(1.5); opacity: 0; }
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-120vh) scale(1.6); opacity: 0; }
 }
 </style>
 
 <script>
 function createBubbles(){
-  for(let i=0;i<12;i++){
+  for(let i=0;i<15;i++){
     let bubble = document.createElement('div');
     bubble.classList.add('bubble');
-    let size = Math.random()*50+10;
+    let size = Math.random()*40+20;  
     bubble.style.width = size+'px';
     bubble.style.height = size+'px';
     bubble.style.left = Math.random()*100+'%';
-    bubble.style.animationDuration = (6+Math.random()*6)+'s';
+    bubble.style.animationDuration = (8+Math.random()*5)+'s';
     bubble.style.animationDelay = (Math.random()*5)+'s';
     document.body.appendChild(bubble);
-    setTimeout(()=>bubble.remove(), 12000);
+    setTimeout(()=>bubble.remove(), 13000);
   }
 }
 createBubbles();
@@ -85,7 +87,7 @@ st.sidebar.title("🌐 Marine Waste AI")
 st.sidebar.markdown("---")
 st.sidebar.header("📘 About the Developer")
 st.sidebar.markdown("""
-**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์ 
+**ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์  
 **รหัสนักศึกษา:** 681110071 🎓  
 
 ---
