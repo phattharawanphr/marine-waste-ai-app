@@ -1,82 +1,129 @@
 import streamlit as st
 from PIL import Image
-import io, base64, requests, json
+import io, base64, requests, time
 
-#หน้าเว็บ
-st.set_page_config(page_title="🌊 Marine Waste AI", page_icon="🌊", layout="wide")
+# ตั้งค่าหน้าเว็บ
+st.set_page_config(
+    page_title="🌊 Marine Waste AI",
+    page_icon="🌊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-#สี
+# พื้นหลังและสไตล์
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
-  background: linear-gradient(to bottom, #e0f7fa, #ffffff);
+  background: linear-gradient(to bottom right, #b3e5fc, #ffffff);
+  animation: fadeIn 2s ease-in;
 }
-[data-testid="stSidebar"] { background-color: #b3e5fc; }
-h1, h2, h3, h4, h5 { color: #01579b; }
+[data-testid="stSidebar"] {
+  background: linear-gradient(to bottom, #81d4fa, #b3e5fc);
+  color: #01579b;
+}
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+h1, h2, h3, h4, h5 {
+  color: #01579b;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px #90caf9;
+}
+.result-box {
+  background-color: #e0f7fa;
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid #0288d1;
+  box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+  animation: fadeIn 1.5s ease-in;
+}
+footer {
+  text-align: center;
+  font-size: 0.9em;
+  color: #0288d1;
+  margin-top: 50px;
+}
 </style>
 """, unsafe_allow_html=True)
 
+# Sidebar 
 st.sidebar.title("🌐 Marine Waste AI")
+st.sidebar.markdown("---")
 st.sidebar.header("📘 About the Developer")
 st.sidebar.markdown("""
-**น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์**   
-รหัสนักศึกษา **681110071**
+**ชื่อ:** นางสาวภัทราวรรณ พรหมเรืองฤทธิ์  
+**รหัสนักศึกษา:** 681110071 🎓  
 
-โครงการใช้ AI จำแนกประเภทขยะทะเล เพื่อสนับสนุนการอนุรักษ์สิ่งแวดล้อม
+---
+
+**Marine Waste AI** พัฒนาเพื่อช่วยจำแนกประเภทของขยะทะเล  
+เช่น พลาสติก โลหะ และเศษอาหารชีวภาพอื่น ๆ  
+โดยใช้โมเดล AI ที่ฝึกจาก Roboflow  
+
+🌊 **เป้าหมาย:**  
+- สร้างความตระหนักรู้เกี่ยวกับปัญหามลพิษทางทะเล  
+- ใช้เทคโนโลยี AI เพื่อสนับสนุนการอนุรักษ์สิ่งแวดล้อม  
+
+---
+
+💻 Powered by [Streamlit](https://streamlit.io) & [Roboflow](https://roboflow.com)
 """)
 
+# ส่วนหลัก
 st.title("🌊 Marine Waste AI")
-st.write("อัปโหลดภาพเพื่อให้ AI จำแนกประเภทของขยะทะเล")
+st.write("อัปโหลดภาพเพื่อให้ AI จำแนกประเภทของขยะทะเลอย่างชาญฉลาด")
 
-#ค่าคงที่ของ Roboflow
-API_KEY = "TCwrOT5oJu5pTNpnNKSV" 
-MODEL_PATH = "marine-waste-ai-wb2eb/3"  
-ENDPOINT = f"https://classify.roboflow.com/{MODEL_PATH}?api_key={API_KEY}"  # docs: classify.roboflow.com
-
-#อัปโหลดและเรียก API
 uploaded = st.file_uploader("📤 เลือกรูปภาพ", type=["jpg", "jpeg", "png"])
-if uploaded:
-    #แสดงภาพ
-    img = Image.open(uploaded).convert("RGB")
-    st.image(img, caption="ภาพที่อัปโหลด", use_container_width=True)
 
-    #แปลงภาพ -> base64 ตามสเปค Roboflow Classification API
+# Roboflow API
+API_KEY = "TCwrOT5oJu5pTNpnNKSV"
+MODEL_PATH = "marine-waste-ai-wb2eb/3"
+ENDPOINT = f"https://classify.roboflow.com/{MODEL_PATH}?api_key={API_KEY}"
+
+if uploaded:
+    # แสดงภาพ
+    image = Image.open(uploaded).convert("RGB")
+    st.image(image, caption="📸 ภาพที่อัปโหลด", use_container_width=True)
+
+    # แปลงภาพเป็น base64
     buf = io.BytesIO()
-    img.save(buf, format="JPEG")
+    image.save(buf, format="JPEG")
     b64_img = base64.b64encode(buf.getvalue()).decode("utf-8")
 
-    with st.spinner("🔍 กำลังวิเคราะห์..."):
-        #ส่งเป็น x-www-form-urlencoded (ตัว body คือสตริง base64)
+    with st.spinner("🤖 กำลังให้ AI วิเคราะห์..."):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         resp = requests.post(ENDPOINT, data=b64_img, headers=headers, timeout=60)
-        resp.raise_for_status()
         result = resp.json()
 
-    #รองรับทั้งรูปแบบผลลัพธ์แบบ list และ dict ตามเอกสาร
-    #(Single-label อาจคืนเป็น list, หรือเป็น dict + predicted_classes)
-    pred_text = ""
     try:
-        #กรณี list
         preds = result.get("predictions", [])
-        if isinstance(preds, list) and preds:
+        if isinstance(preds, list) and len(preds) > 0:
             top = max(preds, key=lambda x: x.get("confidence", 0))
-            pred_text = f"{top['class']} ({top['confidence']*100:.2f}%)"
+            pred_class = top["class"]
+            confidence = top["confidence"] * 100
+
+            # กล่องผลลัพธ์สวยงาม
+            st.markdown(f"""
+            <div class="result-box">
+            <h3>✅ ผลลัพธ์การวิเคราะห์</h3>
+            <p><b>ประเภทของขยะ:</b> {pred_class}</p>
+            <p><b>ความมั่นใจของ AI:</b> {confidence:.2f}%</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.progress(confidence / 100)
+            time.sleep(1)
+            st.balloons()
         else:
-            #กรณี dict
-            preds_dict = result.get("predictions", {})
-            if isinstance(preds_dict, dict) and preds_dict:
-                #เลือก class ที่ confidence สูงสุด
-                top_class = max(preds_dict.items(), key=lambda kv: kv[1].get("confidence", 0))[0]
-                conf = preds_dict[top_class]["confidence"] * 100
-                pred_text = f"{top_class} ({conf:.2f}%)"
+            st.error("ไม่พบผลลัพธ์จากโมเดล")
     except Exception:
-        pred_text = "ไม่สามารถอ่านผลลัพธ์ได้"
+        st.error("⚠️ เกิดข้อผิดพลาดในการประมวลผล")
 
-    if pred_text:
-        st.success(f"✅ ผลลัพธ์: **{pred_text}**")
-    else:
-        st.error("ไม่พบผลลัพธ์จากโมเดล")
-
-    # Debug ปุ่มดู JSON ดิบ (เผื่ออาจารย์อยากเห็น)
-    with st.expander("ดูผลลัพธ์แบบ JSON"):
-        st.code(json.dumps(result, ensure_ascii=False, indent=2))
+# ---------- Footer ----------
+st.markdown("""
+<footer>
+💻 Powered by <a href="https://streamlit.io" target="_blank">Streamlit</a> & 
+<a href="https://roboflow.com" target="_blank">Roboflow</a> | Marine Waste AI 🌊
+</footer>
+""", unsafe_allow_html=True)
