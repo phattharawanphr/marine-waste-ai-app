@@ -5,7 +5,7 @@ import io, base64, requests, time
 # ตั้งค่าหน้าเว็บ 
 st.set_page_config(
     page_title="🌊 Marine Waste AI",
-    page_icon="🌊",
+    page_icon="🪸",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -83,9 +83,9 @@ createBubbles();
 """, unsafe_allow_html=True)
 
 # ---------- Sidebar ----------
-st.sidebar.title("🌐 Marine Waste AI")
+st.sidebar.title("📱Marine Waste AI")
 st.sidebar.markdown("---")
-st.sidebar.header("📘 About the Developer")
+st.sidebar.header("👧🏽 About the Developer")
 st.sidebar.markdown("""
 **ชื่อ:** น.ส.ภัทราวรรณ พรหมเรืองฤทธิ์  
 **รหัสนักศึกษา:** 681110071 🎓  
